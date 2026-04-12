@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#1f6feb" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AI Chat" />
+    <link rel="apple-touch-icon" href="./icons/icon128.png" />
+    <title>AI Chat Pro Client</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <script>
+      (function () {
+        var t = localStorage.getItem("ai-chat-theme") || "dark";
+        document.documentElement.className = "theme-" + t;
+        document.addEventListener("DOMContentLoaded", function () {
+          document.body.className = "theme-" + t;
+        });
+      })();
+    </script>
+    <link rel="stylesheet" href="./style.css" />
+    <script src="./i18n.js"></script>
+    <script src="./storage.js"></script>
+    <script src="./announcement.js"></script>
+    <script src="./api.js"></script>
+  </head>
+  <body>
+    <div id="app" class="theme-dark">
+      <!-- Sidebar -->
+      <aside id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+          <div class="logo">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+              ></path>
+            </svg>
+            <span data-i18n="app.name">AI Chat Pro Client</span>
+          </div>
+          <button id="btn-new-chat" class="btn-icon" data-i18n-title="sidebar.newChat" title="New Chat">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="sidebar-search">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input
+            type="text"
+            id="search-chats"
+            data-i18n-placeholder="sidebar.searchPlaceholder"
+            placeholder="Search chats..."
+          />
+        </div>
+
+        <div id="conversation-list" class="conversation-list"></div>
+
+        <div class="sidebar-footer">
+          <button id="btn-settings" class="btn-sidebar" data-i18n-title="sidebar.settings" title="Settings">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="3"></circle>
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+              ></path>
+            </svg>
+            <span data-i18n="sidebar.settings">Settings</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- Sidebar Overlay (mobile) -->
+      <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+      <!-- Main Content -->
+      <main class="main">
+        <!-- Header -->
+        <header class="header">
+          <button
+            id="btn-toggle-sidebar"
+            class="btn-icon"
+            data-i18n-title="sidebar.toggleSidebar"
+            title="Toggle sidebar"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <div class="header-title">
+            <span id="chat-title" data-i18n="header.newChat">New Chat</span>
+            <button
+              id="btn-edit-title"
+              class="btn-icon-sm"
+              data-i18n-title="header.editTitle"
+              title="Edit title"
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                ></path>
+                <path
+                  d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                ></path>
+              </svg>
+            </button>
+          </div>
+          <div class="header-actions">
+            <span id="model-badge" class="badge">sonar</span>
+            <button id="btn-export" class="btn-icon" data-i18n-title="header.exportChat" title="Export chat">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            </button>
+            <button id="btn-clear-chat" class="btn-icon" data-i18n-title="header.clearChat" title="Clear chat">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path
+                  d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- Offline Banner -->
+        <div id="offline-banner" class="offline-banner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+          Offline – Local AI (LM Studio) still works
+        </div>
+
+        <!-- Remote Announcement Banner -->
+        <div id="announcement-container" class="announcement-container hidden"></div>
+
+        <!-- Chat Area -->
+        <div id="chat-area" class="chat-area">
+          <!-- Welcome Screen -->
+          <div id="welcome-screen" class="welcome-screen">
+            <div class="welcome-icon">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                ></path>
+              </svg>
+            </div>
+            <h2 data-i18n="welcome.title">Welcome to AI Chat Pro Client</h2>
+            <p data-i18n="welcome.subtitle">Ask a question or start a conversation with the AI.</p>
+            <div class="welcome-suggestions">
+              <button
+                class="suggestion-chip"
+                data-i18n-prompt="welcome.quantumPrompt"
+                data-prompt="Explain quantum computing in simple terms"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                <span data-i18n="welcome.quantum">Explain quantum computing</span>
+              </button>
+              <button
+                class="suggestion-chip"
+                data-i18n-prompt="welcome.codePrompt"
+                data-prompt="Write me a Python function that calculates Fibonacci numbers"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <polyline points="16 18 22 12 16 6" />
+                  <polyline points="8 6 2 12 8 18" />
+                </svg>
+                <span data-i18n="welcome.code">Write Python code</span>
+              </button>
+              <button
+                class="suggestion-chip"
+                data-i18n-prompt="welcome.aitrendsPrompt"
+                data-prompt="What are the latest trends in AI development?"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                </svg>
+                <span data-i18n="welcome.aitrends">AI Trends 2025</span>
+              </button>
+              <button
+                class="suggestion-chip"
+                data-i18n-prompt="welcome.resumePrompt"
+                data-prompt="Help me create a professional resume"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                  />
+                  <polyline points="14 2 14 8 20 8" />
+                </svg>
+                <span data-i18n="welcome.resume">Create a CV</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Messages Container -->
+          <div id="messages" class="messages"></div>
+
+          <!-- Typing Indicator -->
+          <div id="typing-indicator" class="typing-indicator hidden">
+            <div class="typing-avatar">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                ></path>
+              </svg>
+            </div>
+            <div class="typing-dots">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+          <div class="input-container">
+            <textarea
+              id="message-input"
+              data-i18n-placeholder="input.placeholder"
+              placeholder="Enter message..."
+              rows="1"
+              autofocus
+            ></textarea>
+            <div class="input-actions">
+              <span id="char-count" class="char-count"></span>
+              <button
+                id="btn-send"
+                class="btn-send"
+                title="Send (Enter)"
+                disabled
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="input-hint">
+            <span id="input-hint-text" data-i18n="input.hint"
+              >Enter to send, Shift+Enter for new line</span
+            >
+          </div>
+        </div>
+      </main>
+
+      <!-- Export Modal -->
+      <div id="export-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 data-i18n="export.title">Export chat</h3>
+            <button class="btn-icon modal-close">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="modal-body">
+            <button id="export-md" class="export-option">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+              <div>
+                <strong data-i18n="export.md">Markdown (.md)</strong>
+                <span data-i18n="export.mdDesc">Formatted text with code blocks</span>
+              </div>
+            </button>
+            <button id="export-json" class="export-option">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="16 18 22 12 16 6" />
+                <polyline points="8 6 2 12 8 18" />
+              </svg>
+              <div>
+                <strong data-i18n="export.json">JSON (.json)</strong>
+                <span data-i18n="export.jsonDesc">Structured data for import</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delete Confirm Modal -->
+      <div id="delete-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content modal-sm">
+          <div class="modal-header">
+            <h3 data-i18n="delete.title">Delete chat?</h3>
+          </div>
+          <div class="modal-body">
+            <p data-i18n="delete.body">
+              Do you really want to delete this chat? This action cannot be undone.
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary modal-close" data-i18n="delete.cancel">Cancel</button>
+            <button id="confirm-delete" class="btn btn-danger" data-i18n="delete.confirm">Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rename Modal -->
+      <div id="rename-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content modal-sm">
+          <div class="modal-header">
+            <h3 data-i18n="rename.title">Rename chat</h3>
+            <button class="btn-icon modal-close">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          <div class="modal-body">
+            <input
+              type="text"
+              id="rename-input"
+              class="input"
+              data-i18n-placeholder="rename.placeholder"
+              placeholder="Chat title"
+              maxlength="80"
+            />
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary modal-close" data-i18n="rename.cancel">Cancel</button>
+            <button id="confirm-rename" class="btn btn-primary" data-i18n="rename.confirm">Rename</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toast Container -->
+      <div id="toast-container" class="toast-container"></div>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

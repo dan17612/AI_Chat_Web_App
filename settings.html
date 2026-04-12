@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#1f6feb" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AI Chat" />
+    <link rel="apple-touch-icon" href="./icons/icon128.png" />
+    <title>AI Chat Pro Client – Settings</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <script>
+      (function () {
+        var t = localStorage.getItem("ai-chat-theme") || "dark";
+        document.documentElement.className = "theme-" + t;
+        document.addEventListener("DOMContentLoaded", function () {
+          document.body.className = "theme-" + t;
+        });
+      })();
+    </script>
+    <link rel="stylesheet" href="./settings.css" />
+    <script src="./i18n.js"></script>
+    <script src="./storage.js"></script>
+    <script src="./announcement.js"></script>
+    <script src="./api.js"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      }
+    </script>
+  </head>
+  <body>
+    <div id="app" class="theme-dark">
+      <!-- Top navigation bar -->
+      <nav class="settings-topbar">
+        <a href="./index.html" class="back-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          Back to Chat
+        </a>
+        <span class="topbar-title">Settings</span>
+      </nav>
+      <div class="container">
+        <!-- Header -->
+        <header class="page-header">
+          <div class="header-left">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+              ></path>
+            </svg>
+            <h1><span data-i18n="app.name">AI Chat Pro Client</span> <span class="version">v1.0.0</span></h1>
+          </div>
+          <div class="header-right">
+            <a href="index.html" class="btn-back">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+              <span data-i18n="settings.backToChat">Back to chat</span>
+            </a>
+            <span id="save-status" class="save-status hidden">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span data-i18n="status.saved">Saved</span>
+            </span>
+          </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="settings-nav">
+          <button class="nav-item active" data-section="api">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+            <span data-i18n="nav.api">API</span>
+          </button>
+          <button class="nav-item" data-section="model">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+            </svg>
+            <span data-i18n="nav.model">Model</span>
+          </button>
+          <button class="nav-item" data-section="appearance">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="5" />
+              <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+              <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+            <span data-i18n="nav.appearance">Appearance</span>
+          </button>
+          <button class="nav-item" data-section="behavior">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+            <span data-i18n="nav.behavior">Behavior</span>
+          </button>
+          <button class="nav-item" data-section="messages">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 12h-6l-2 3h-4l-2-3H2" />
+              <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+            </svg>
+            <span data-i18n="nav.messages">Messages</span>
+          </button>
+          <button class="nav-item" data-section="data">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            <span data-i18n="nav.data">Data</span>
+          </button>
+        </nav>
+
+        <!-- Settings Sections -->
+        <div class="settings-body">
+          <!-- API Section -->
+          <section id="section-api" class="settings-section active">
+            <div class="section-header">
+              <h2 data-i18n="api.title">API Configuration</h2>
+              <p data-i18n="api.subtitle">Select your AI provider and configure the API key and connection.</p>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label" for="provider-select" data-i18n="api.provider">AI Provider</label>
+              <select id="provider-select" class="input">
+                <option value="perplexity">Perplexity</option>
+                <option value="openai">ChatGPT (OpenAI)</option>
+                <option value="anthropic">Claude (Anthropic)</option>
+                <option value="gemini">Gemini (Google)</option>
+                <option value="lmstudio">LM Studio (Lokal)</option>
+              </select>
+            </div>
+
+            <div class="setting-group" id="api-key-group">
+              <label class="setting-label" for="api-key">
+                <span id="api-key-label">API Key</span>
+                <a href="#" target="_blank" rel="noopener" class="help-link" id="api-key-help">
+                  <span data-i18n="api.keyHelpText">Where can I get a key?</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" />
+                    <line x1="10" y1="14" x2="21" y2="3" />
+                  </svg>
+                </a>
+              </label>
+              <div class="input-with-action">
+                <input type="password" id="api-key" class="input" placeholder="pplx-xxxxxxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false" />
+                <button id="toggle-key-visibility" class="btn-icon" title="Toggle visibility">
+                  <svg id="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                </button>
+              </div>
+              <span class="setting-hint" id="api-key-hint" data-i18n="api.keyHint">Your API key is stored locally and never shared with third parties.</span>
+            </div>
+
+            <div class="setting-group hidden" id="lmstudio-url-group">
+              <label class="setting-label" for="lmstudio-url" data-i18n="api.serverUrl">Server URL</label>
+              <input type="text" id="lmstudio-url" class="input" placeholder="http://localhost:1234" autocomplete="off" spellcheck="false" />
+              <span class="setting-hint" data-i18n="api.serverHint">URL of the LM Studio local server. Default: http://localhost:1234</span>
+            </div>
+
+            <details class="setting-group hidden" id="advanced-url-group">
+              <summary class="advanced-summary">
+                <svg class="chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+                <span data-i18n="api.advanced">Advanced</span>
+              </summary>
+              <div class="advanced-content">
+                <label class="setting-label" for="base-url" data-i18n="api.baseUrl">Base URL (optional)</label>
+                <input type="text" id="base-url" class="input" placeholder="" autocomplete="off" spellcheck="false" />
+                <span class="setting-hint" data-i18n="api.baseUrlHint">Leave empty for the default endpoint.</span>
+              </div>
+            </details>
+
+            <div class="setting-group">
+              <label class="setting-label" data-i18n="api.connectionTest">Connection test</label>
+              <button id="btn-test-api" class="btn btn-primary">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span data-i18n="api.testBtn">Test API</span>
+              </button>
+              <div id="api-test-result" class="test-result hidden"></div>
+            </div>
+          </section>
+
+          <!-- Model Section -->
+          <section id="section-model" class="settings-section">
+            <div class="section-header">
+              <h2 data-i18n="model.title">Model Settings</h2>
+              <p data-i18n="model.subtitle">Select the AI model and adjust parameters.</p>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label" for="model-select" data-i18n="model.select">Model</label>
+              <select id="model-select" class="input"></select>
+            </div>
+
+            <div class="setting-group">
+              <button id="btn-check-models" class="btn btn-secondary">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                  <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <span data-i18n="model.checkBtn">Check models</span>
+              </button>
+              <div id="model-check-results" class="model-check-results"></div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label" data-i18n="model.addLabel">Add model manually</label>
+              <div class="input-with-action">
+                <input type="text" id="custom-model-input" class="input" data-i18n-placeholder="model.addPlaceholder" placeholder="e.g. gpt-5" autocomplete="off" spellcheck="false" />
+                <button id="btn-add-model" class="btn btn-primary" data-i18n-title="model.addTitle" title="Add">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                </button>
+              </div>
+              <div id="custom-model-list" class="custom-model-list"></div>
+            </div>
+
+            <div class="setting-group hidden" id="lmstudio-model-group">
+              <label class="setting-label">Modell</label>
+              <div class="input-with-action">
+                <select id="lmstudio-model" class="input">
+                  <option value="">-- Modelle laden --</option>
+                </select>
+                <button id="btn-load-models" class="btn-icon" data-i18n-title="model.lmLoad" title="Load models from LM Studio">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 4 23 10 17 10" />
+                    <polyline points="1 20 1 14 7 14" />
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                  </svg>
+                </button>
+              </div>
+              <span id="lmstudio-model-hint" class="setting-hint" data-i18n="model.lmHint">Start LM Studio and click the refresh icon.</span>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label" for="temperature">
+                <span data-i18n="model.temp">Temperature</span>
+                <span class="setting-value" id="temperature-value">0.7</span>
+              </label>
+              <input type="range" id="temperature" class="range-input" min="0" max="2" step="0.1" value="0.7" />
+              <div class="range-labels">
+                <span data-i18n="model.tempPrecise">Precise</span>
+                <span data-i18n="model.tempCreative">Creative</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label" for="max-tokens">
+                <span data-i18n="model.maxTokens">Max. Tokens</span>
+                <span class="setting-value" id="max-tokens-value">2048</span>
+              </label>
+              <input type="range" id="max-tokens" class="range-input" min="256" max="4096" step="256" value="2048" />
+              <div class="range-labels"><span>256</span><span>4096</span></div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label" for="system-prompt" data-i18n="model.systemPrompt">System Prompt</label>
+              <textarea id="system-prompt" class="input textarea" rows="4" data-i18n-placeholder="model.systemPromptPlaceholder" placeholder="Define the AI behavior..."></textarea>
+              <span class="setting-hint" data-i18n="model.systemPromptHint">Give the AI a role or specific instructions.</span>
+            </div>
+          </section>
+
+          <!-- Appearance Section -->
+          <section id="section-appearance" class="settings-section">
+            <div class="section-header">
+              <h2 data-i18n="appearance.title">Appearance</h2>
+              <p data-i18n="appearance.subtitle">Customize the design to your preferences.</p>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label" for="language-select" data-i18n="appearance.language">Language</label>
+              <select id="language-select" class="input">
+                <option value="system" data-i18n="appearance.system">System</option>
+                <option value="en">English</option>
+                <option value="de">Deutsch</option>
+                <option value="ru">Русский</option>
+              </select>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label" data-i18n="appearance.theme">Theme</label>
+              <div class="theme-picker">
+                <label class="theme-option">
+                  <input type="radio" name="theme" value="dark" />
+                  <div class="theme-preview dark-preview">
+                    <div class="preview-header"></div>
+                    <div class="preview-body"><div class="preview-msg"></div><div class="preview-msg reply"></div></div>
+                  </div>
+                  <span data-i18n="appearance.dark">Dark</span>
+                </label>
+                <label class="theme-option">
+                  <input type="radio" name="theme" value="light" />
+                  <div class="theme-preview light-preview">
+                    <div class="preview-header"></div>
+                    <div class="preview-body"><div class="preview-msg"></div><div class="preview-msg reply"></div></div>
+                  </div>
+                  <span data-i18n="appearance.light">Light</span>
+                </label>
+                <label class="theme-option">
+                  <input type="radio" name="theme" value="system" />
+                  <div class="theme-preview system-preview">
+                    <div class="preview-header"></div>
+                    <div class="preview-body"><div class="preview-msg"></div><div class="preview-msg reply"></div></div>
+                  </div>
+                  <span data-i18n="appearance.system">System</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label" for="font-size">
+                <span data-i18n="appearance.fontSize">Font size</span>
+                <span class="setting-value" id="font-size-value">14px</span>
+              </label>
+              <input type="range" id="font-size" class="range-input" min="12" max="18" step="1" value="14" />
+              <div class="range-labels">
+                <span data-i18n="appearance.fontSmall">Small</span>
+                <span data-i18n="appearance.fontLarge">Large</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Behavior Section -->
+          <section id="section-behavior" class="settings-section">
+            <div class="section-header">
+              <h2 data-i18n="behavior.title">Behavior</h2>
+              <p data-i18n="behavior.subtitle">Adjust the app behavior.</p>
+            </div>
+
+            <div class="setting-group">
+              <div class="toggle-setting">
+                <div>
+                  <label class="setting-label" data-i18n="behavior.sendEnter">Send with Enter</label>
+                  <span class="setting-hint" data-i18n="behavior.sendEnterHint">Send message with Enter, Shift+Enter for new line.</span>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" id="send-with-enter" checked />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <div class="toggle-setting">
+                <div>
+                  <label class="setting-label" data-i18n="behavior.showSources">Show sources</label>
+                  <span class="setting-hint" data-i18n="behavior.showSourcesHint">Show source links below AI responses.</span>
+                </div>
+                <label class="toggle">
+                  <input type="checkbox" id="show-sources" checked />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </section>
+
+          <!-- Messages Section -->
+          <section id="section-messages" class="settings-section">
+            <div class="section-header">
+              <h2 data-i18n="messages.title">Messages</h2>
+              <p data-i18n="messages.subtitle">Recent announcements from the developer.</p>
+            </div>
+
+            <div class="setting-group">
+              <div id="message-list" class="message-list"></div>
+              <button id="btn-clear-messages" class="btn btn-secondary" style="margin-top: 12px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+                <span data-i18n="messages.clear">Clear message history</span>
+              </button>
+            </div>
+          </section>
+
+          <!-- Data Section -->
+          <section id="section-data" class="settings-section">
+            <div class="section-header">
+              <h2 data-i18n="data.title">Data &amp; Storage</h2>
+              <p data-i18n="data.subtitle">Manage your stored data.</p>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label" data-i18n="data.history">Chat history</label>
+              <div class="data-stats">
+                <div class="stat-card">
+                  <span class="stat-value" id="stat-conversations">0</span>
+                  <span class="stat-label" data-i18n="data.chats">Chats</span>
+                </div>
+                <div class="stat-card">
+                  <span class="stat-value" id="stat-messages">0</span>
+                  <span class="stat-label" data-i18n="data.messages">Messages</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label" data-i18n="data.exportLabel">Export backup</label>
+              <button id="btn-export-all" class="btn btn-secondary">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                <span data-i18n="data.exportBtn">Export backup as JSON</span>
+              </button>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label" data-i18n="data.importLabel">Import backup</label>
+              <button id="btn-import-all" class="btn btn-secondary">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <span data-i18n="data.importBtn">Import backup...</span>
+              </button>
+              <input type="file" id="import-file-input" accept=".json,application/json" style="display:none" />
+            </div>
+
+            <div class="setting-group danger-zone">
+              <label class="setting-label" data-i18n="data.danger">Danger zone</label>
+              <button id="btn-clear-all" class="btn btn-danger">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+                <span data-i18n="data.clearAll">Delete all chats</span>
+              </button>
+              <span class="setting-hint" data-i18n="data.clearHint">This action cannot be undone.</span>
+            </div>
+
+            <div class="setting-group danger-zone">
+              <button id="btn-reset-settings" class="btn btn-danger-outline" data-i18n="data.reset">Reset settings</button>
+              <span class="setting-hint" data-i18n="data.resetHint">Resets all settings to their default values.</span>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <script src="./settings.js"></script>
+  </body>
+</html>
