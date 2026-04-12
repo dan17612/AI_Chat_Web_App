@@ -3,7 +3,7 @@
 // Cache-first strategy for all web-app assets.
 // ============================================
 
-const CACHE_NAME = "ai-chat-pro-v2";
+const CACHE_NAME = "ai-chat-pro-v3";
 
 const PRECACHE_URLS = [
   "./",
@@ -18,6 +18,8 @@ const PRECACHE_URLS = [
   "./icons/icon16.png",
   "./icons/icon48.png",
   "./icons/icon128.png",
+  "./icons/icon192.png",
+  "./icons/icon512.png",
   "./i18n.js",
   "./storage.js",
   "./announcement.js",
