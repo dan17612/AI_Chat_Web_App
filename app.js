@@ -43,6 +43,7 @@
     modelBadge: $("#model-badge"),
     charCount: $("#char-count"),
     inputHintText: $("#input-hint-text"),
+    btnCloseSidebar: $("#btn-close-sidebar"),
     searchChats: $("#search-chats"),
     exportModal: $("#export-modal"),
     deleteModal: $("#delete-modal"),
@@ -61,6 +62,10 @@
     renderConversationList();
     renderActiveChat();
     bindEvents();
+    // Start with sidebar closed on mobile
+    if (window.innerWidth <= 700) {
+      dom.sidebar.classList.add("collapsed");
+    }
     if (window.announcement && dom.announcementContainer) {
       window.announcement.init(dom.announcementContainer);
     }
@@ -199,9 +204,43 @@
 
     if (dom.sidebarOverlay) {
       dom.sidebarOverlay.addEventListener("click", () => {
-        dom.sidebar.classList.add("collapsed");
-        dom.sidebarOverlay.classList.remove("visible");
+        closeSidebar();
       });
+    }
+
+    if (dom.btnCloseSidebar) {
+      dom.btnCloseSidebar.addEventListener("click", () => {
+        closeSidebar();
+      });
+    }
+
+    // Swipe left to close sidebar
+    (function initSidebarSwipe() {
+      let startX = 0;
+      let startY = 0;
+      let swiping = false;
+
+      dom.sidebar.addEventListener("touchstart", (e) => {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        swiping = true;
+      }, { passive: true });
+
+      dom.sidebar.addEventListener("touchend", (e) => {
+        if (!swiping) return;
+        swiping = false;
+        const dx = e.changedTouches[0].clientX - startX;
+        const dy = Math.abs(e.changedTouches[0].clientY - startY);
+        // swipe left at least 60px, more horizontal than vertical
+        if (dx < -60 && dy < Math.abs(dx)) {
+          closeSidebar();
+        }
+      }, { passive: true });
+    })();
+
+    function closeSidebar() {
+      dom.sidebar.classList.add("collapsed");
+      if (dom.sidebarOverlay) dom.sidebarOverlay.classList.remove("visible");
     }
 
     // Settings — navigate to settings page
