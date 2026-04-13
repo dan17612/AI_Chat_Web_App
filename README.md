@@ -65,7 +65,7 @@ A fast, privacy-focused chat client for multiple AI providers. Works as a **Prog
 | Perplexity | Yes | Default provider, includes web sources |
 | OpenAI | Yes | GPT models |
 | Anthropic | Yes | Claude models |
-| LM Studio | No | Local AI, works offline |
+| LM Studio | No/Yes | Local AI, works offline |
 | Custom | Yes | Any OpenAI-compatible endpoint |
 
 ## Configuration
