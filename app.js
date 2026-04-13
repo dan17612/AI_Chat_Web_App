@@ -53,6 +53,12 @@
     confirmRename: $("#confirm-rename"),
     toastContainer: $("#toast-container"),
     announcementContainer: $("#announcement-container"),
+    activationModal: $("#activation-modal"),
+    activationFileInput: $("#activation-file-input"),
+    activationFileLabel: $("#activation-file-label"),
+    btnSkipActivation: $("#btn-skip-activation"),
+    activationError: $("#activation-error"),
+    activationSuccess: $("#activation-success"),
   };
 
   // ---- Initialize ----
@@ -124,6 +130,105 @@
     window.addEventListener("online", updateOfflineBanner);
     window.addEventListener("offline", updateOfflineBanner);
     updateOfflineBanner();
+
+    // First visit check
+    checkFirstVisit();
+  }
+
+  // ---- Activation / First Visit ----
+  function checkFirstVisit() {
+    const activated = localStorage.getItem("ai-chat-activated");
+    if (activated) return; // Already seen
+
+    if (dom.activationModal) {
+      toggleModal(dom.activationModal, true);
+      bindActivationEvents();
+    }
+  }
+
+  function bindActivationEvents() {
+    // Skip / Developer button
+    dom.btnSkipActivation.addEventListener("click", () => {
+      markActivated();
+      toggleModal(dom.activationModal, false);
+    });
+
+    // File input change
+    dom.activationFileInput.addEventListener("change", (e) => {
+      if (e.target.files.length > 0) handleActivationFile(e.target.files[0]);
+    });
+
+    // Drag & drop
+    const dropZone = dom.activationFileLabel;
+    dropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropZone.classList.add("dragover");
+    });
+    dropZone.addEventListener("dragleave", () => {
+      dropZone.classList.remove("dragover");
+    });
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("dragover");
+      if (e.dataTransfer.files.length > 0) handleActivationFile(e.dataTransfer.files[0]);
+    });
+
+    // Close on backdrop click
+    dom.activationModal.querySelector(".modal-backdrop").addEventListener("click", () => {
+      markActivated();
+      toggleModal(dom.activationModal, false);
+    });
+  }
+
+  async function handleActivationFile(file) {
+    const _t = window.i18n ? window.i18n.t.bind(window.i18n) : (k) => k;
+    dom.activationError.classList.add("hidden");
+    dom.activationSuccess.classList.add("hidden");
+
+    // Validate file type
+    if (!file.name.endsWith(".json")) {
+      showActivationError(_t("activation.errorFormat"));
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const config = JSON.parse(text);
+
+      if (config && config.settings) {
+        state.settings = normalizeSettings(config.settings);
+        await window.Storage.set({ settings: state.settings });
+        applySettings();
+      } else {
+        throw new Error(_t("activation.errorInvalid"));
+      }
+
+      // Show success
+      dom.activationSuccess.textContent = _t("activation.success");
+      dom.activationSuccess.classList.remove("hidden");
+      markActivated();
+
+      setTimeout(() => {
+        toggleModal(dom.activationModal, false);
+        showToast(_t("activation.successToast"), "success");
+      }, 1500);
+    } catch (err) {
+      if (err instanceof SyntaxError) {
+        showActivationError(_t("activation.errorFormat"));
+      } else {
+        showActivationError(err.message || _t("activation.errorInvalid"));
+      }
+    }
+  }
+
+  function showActivationError(msg) {
+    dom.activationError.textContent = msg;
+    dom.activationError.classList.remove("hidden");
+    dom.activationSuccess.classList.add("hidden");
+  }
+
+  function markActivated() {
+    localStorage.setItem("ai-chat-activated", "1");
   }
 
   async function loadState() {

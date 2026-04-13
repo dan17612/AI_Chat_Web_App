@@ -44,6 +44,22 @@
       "update.message": "New version available!",
       "update.button": "Update",
 
+      // Activation dialog
+      "activation.title": "Welcome to AI Chat Pro Client",
+      "activation.subtitle": "It looks like this is your first visit. How would you like to get started?",
+      "activation.fileTitle": "I have an activation file",
+      "activation.fileDesc": "Upload your configuration file to automatically apply all settings.",
+      "activation.fileDrop": "Click or drag & drop your .json file here",
+      "activation.or": "or",
+      "activation.devTitle": "Developer / Own API Key",
+      "activation.devDesc": "Configure everything yourself with your own API key and settings.",
+      "activation.skip": "Continue without file",
+      "activation.contact": "No activation file? Request one at:",
+      "activation.errorInvalid": "Invalid configuration file. Please check the file and try again.",
+      "activation.errorFormat": "Invalid file. Please upload a valid .json configuration file.",
+      "activation.success": "Settings loaded successfully!",
+      "activation.successToast": "Configuration applied successfully!",
+
       // Popup – export modal
       "export.title": "Export chat",
       "export.md": "Markdown (.md)",
@@ -262,6 +278,22 @@
       "update.message": "Neue Version verfügbar!",
       "update.button": "Aktualisieren",
 
+      // Activation dialog
+      "activation.title": "Willkommen bei AI Chat Pro Client",
+      "activation.subtitle": "Es sieht aus als wären Sie zum ersten Mal hier. Wie möchten Sie starten?",
+      "activation.fileTitle": "Ich habe eine Aktivierungsdatei",
+      "activation.fileDesc": "Laden Sie Ihre Konfigurationsdatei hoch, um alle Einstellungen automatisch zu übernehmen.",
+      "activation.fileDrop": "Klicken oder .json-Datei hierher ziehen",
+      "activation.or": "oder",
+      "activation.devTitle": "Entwickler / Eigener API-Key",
+      "activation.devDesc": "Konfigurieren Sie alles selbst mit Ihrem eigenen API-Key und Einstellungen.",
+      "activation.skip": "Ohne Datei fortfahren",
+      "activation.contact": "Keine Aktivierungsdatei? Anfragen an:",
+      "activation.errorInvalid": "Ungültige Konfigurationsdatei. Bitte Datei prüfen und erneut versuchen.",
+      "activation.errorFormat": "Ungültige Datei. Bitte eine gültige .json-Konfigurationsdatei hochladen.",
+      "activation.success": "Einstellungen erfolgreich geladen!",
+      "activation.successToast": "Konfiguration erfolgreich übernommen!",
+
       // Popup – export modal
       "export.title": "Chat exportieren",
       "export.md": "Markdown (.md)",
@@ -476,6 +508,22 @@
       // Update banner
       "update.message": "Доступна новая версия!",
       "update.button": "Обновить",
+
+      // Activation dialog
+      "activation.title": "Добро пожаловать в AI Chat Pro Client",
+      "activation.subtitle": "Похоже, вы здесь впервые. Как вы хотите начать?",
+      "activation.fileTitle": "У меня есть файл активации",
+      "activation.fileDesc": "Загрузите файл конфигурации для автоматического применения всех настроек.",
+      "activation.fileDrop": "Нажмите или перетащите .json файл сюда",
+      "activation.or": "или",
+      "activation.devTitle": "Разработчик / Свой API-ключ",
+      "activation.devDesc": "Настройте всё самостоятельно с собственным API-ключом.",
+      "activation.skip": "Продолжить без файла",
+      "activation.contact": "Нет файла активации? Запросите по адресу:",
+      "activation.errorInvalid": "Неверный файл конфигурации. Проверьте файл и попробуйте снова.",
+      "activation.errorFormat": "Неверный файл. Загрузите корректный .json файл конфигурации.",
+      "activation.success": "Настройки успешно загружены!",
+      "activation.successToast": "Конфигурация успешно применена!",
 
       // Popup – export modal
       "export.title": "Экспортировать чат",

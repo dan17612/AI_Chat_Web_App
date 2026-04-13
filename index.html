@@ -516,6 +516,69 @@
         </div>
       </div>
 
+      <!-- First Visit / Activation Modal -->
+      <div id="activation-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content activation-modal-content">
+          <div class="activation-header">
+            <div class="activation-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <h2 data-i18n="activation.title">Welcome to AI Chat Pro Client</h2>
+            <p data-i18n="activation.subtitle">It looks like this is your first visit. How would you like to get started?</p>
+          </div>
+
+          <!-- Option 1: Upload activation file -->
+          <div class="activation-section">
+            <div class="activation-section-header">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              <h3 data-i18n="activation.fileTitle">I have an activation file</h3>
+            </div>
+            <p class="activation-desc" data-i18n="activation.fileDesc">Upload your configuration file to automatically apply all settings.</p>
+            <label id="activation-file-label" class="activation-file-drop" tabindex="0">
+              <input type="file" id="activation-file-input" accept=".json" hidden />
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="12" y1="18" x2="12" y2="12"/>
+                <polyline points="9 15 12 12 15 15"/>
+              </svg>
+              <span data-i18n="activation.fileDrop">Click or drag & drop your .json file here</span>
+            </label>
+            <div id="activation-error" class="activation-error hidden"></div>
+            <div id="activation-success" class="activation-success hidden"></div>
+          </div>
+
+          <div class="activation-divider">
+            <span data-i18n="activation.or">or</span>
+          </div>
+
+          <!-- Option 2: Developer / Own API -->
+          <div class="activation-section">
+            <div class="activation-section-header">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="16 18 22 12 16 6"></polyline>
+                <polyline points="8 6 2 12 8 18"></polyline>
+              </svg>
+              <h3 data-i18n="activation.devTitle">Developer / Own API Key</h3>
+            </div>
+            <p class="activation-desc" data-i18n="activation.devDesc">Configure everything yourself with your own API key and settings.</p>
+            <button id="btn-skip-activation" class="btn btn-secondary activation-btn-full" data-i18n="activation.skip">Continue without code</button>
+          </div>
+
+          <div class="activation-footer">
+            <p data-i18n="activation.contact">No activation file? Request one at:</p>
+            <a href="mailto:daniil@schiller.pw" class="activation-email">daniil@schiller.pw</a>
+          </div>
+        </div>
+      </div>
+
       <!-- Toast Container -->
       <div id="toast-container" class="toast-container"></div>
     </div>
