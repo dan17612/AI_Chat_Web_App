@@ -44,6 +44,7 @@
     charCount: $("#char-count"),
     inputHintText: $("#input-hint-text"),
     btnCloseSidebar: $("#btn-close-sidebar"),
+    btnScrollBottom: $("#btn-scroll-bottom"),
     searchChats: $("#search-chats"),
     exportModal: $("#export-modal"),
     deleteModal: $("#delete-modal"),
@@ -69,9 +70,50 @@
     if (window.announcement && dom.announcementContainer) {
       window.announcement.init(dom.announcementContainer);
     }
-    // Register service worker
+    // Register service worker + update detection
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./sw.js").catch(() => {});
+      navigator.serviceWorker.register("./sw.js").then((reg) => {
+        // Check for updates periodically (every 30 min)
+        setInterval(() => reg.update(), 30 * 60 * 1000);
+
+        function onNewSW(worker) {
+          const banner = document.getElementById("update-banner");
+          const btn = document.getElementById("btn-update");
+          if (!banner || !btn) return;
+
+          banner.classList.add("visible");
+
+          btn.addEventListener("click", () => {
+            btn.disabled = true;
+            btn.textContent = "...";
+            worker.postMessage("SKIP_WAITING");
+          });
+        }
+
+        // New SW waiting right now (e.g. user reopened tab)
+        if (reg.waiting) {
+          onNewSW(reg.waiting);
+        }
+
+        // New SW installed while page is open
+        reg.addEventListener("updatefound", () => {
+          const newWorker = reg.installing;
+          if (!newWorker) return;
+          newWorker.addEventListener("statechange", () => {
+            if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+              onNewSW(newWorker);
+            }
+          });
+        });
+
+        // When new SW takes over → reload page
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener("controllerchange", () => {
+          if (refreshing) return;
+          refreshing = true;
+          window.location.reload();
+        });
+      }).catch(() => {});
     }
     // Offline detection
     function updateOfflineBanner() {
@@ -251,6 +293,20 @@
     dom.btnSend.addEventListener("click", sendMessage);
     dom.messageInput.addEventListener("input", handleInputChange);
     dom.messageInput.addEventListener("keydown", handleInputKeydown);
+
+    // Scroll-to-bottom button
+    if (dom.btnScrollBottom) {
+      dom.btnScrollBottom.addEventListener("click", () => {
+        scrollToBottom();
+      });
+
+      dom.chatArea.addEventListener("scroll", () => {
+        const threshold = 150;
+        const distanceFromBottom =
+          dom.chatArea.scrollHeight - dom.chatArea.scrollTop - dom.chatArea.clientHeight;
+        dom.btnScrollBottom.classList.toggle("hidden", distanceFromBottom < threshold);
+      });
+    }
 
     $$(".suggestion-chip").forEach((chip) => {
       chip.addEventListener("click", () => {
@@ -640,7 +696,6 @@
       state.isLoading = false;
       dom.typingIndicator.classList.add("hidden");
       dom.btnSend.disabled = !dom.messageInput.value.trim();
-      scrollToBottom();
     }
   }
 

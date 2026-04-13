@@ -40,6 +40,10 @@
       "input.placeholder": "Enter message...",
       "input.hint": "Enter to send, Shift+Enter for new line",
 
+      // Update banner
+      "update.message": "New version available!",
+      "update.button": "Update",
+
       // Popup – export modal
       "export.title": "Export chat",
       "export.md": "Markdown (.md)",
@@ -254,6 +258,10 @@
       "input.placeholder": "Nachricht eingeben...",
       "input.hint": "Enter zum Senden, Shift+Enter für neue Zeile",
 
+      // Update banner
+      "update.message": "Neue Version verfügbar!",
+      "update.button": "Aktualisieren",
+
       // Popup – export modal
       "export.title": "Chat exportieren",
       "export.md": "Markdown (.md)",
@@ -464,6 +472,10 @@
       // Popup – input area
       "input.placeholder": "Введите сообщение...",
       "input.hint": "Enter для отправки, Shift+Enter для новой строки",
+
+      // Update banner
+      "update.message": "Доступна новая версия!",
+      "update.button": "Обновить",
 
       // Popup – export modal
       "export.title": "Экспортировать чат",

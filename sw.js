@@ -1,9 +1,9 @@
 // ============================================
 // AI Chat Pro Client – Service Worker (PWA)
-// Cache-first strategy for all web-app assets.
+// Stale-while-revalidate + update notification.
 // ============================================
 
-const CACHE_NAME = "ai-chat-pro-v3";
+const CACHE_NAME = "ai-chat-pro-v5";
 
 const PRECACHE_URLS = [
   "./",
@@ -25,13 +25,14 @@ const PRECACHE_URLS = [
   "./announcement.js",
 ];
 
+// Install: precache assets, don't activate yet (wait for user confirm)
 self.addEventListener("install", (event) => {
-  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS).catch(() => {}))
   );
 });
 
+// Activate: delete old caches, notify all tabs
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -40,23 +41,28 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+// Fetch: stale-while-revalidate
 self.addEventListener("fetch", (event) => {
-  // Only handle same-origin GET requests; pass through cross-origin API calls
   const url = new URL(event.request.url);
-  if (event.request.method !== "GET" || url.origin !== self.location.origin) {
-    return;
-  }
+  if (event.request.method !== "GET" || url.origin !== self.location.origin) return;
 
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((response) => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        }
-        return response;
-      });
-    })
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.match(event.request).then((cached) => {
+        const fetchPromise = fetch(event.request).then((response) => {
+          if (response.ok) cache.put(event.request, response.clone());
+          return response;
+        }).catch(() => cached);
+
+        return cached || fetchPromise;
+      })
+    )
   );
+});
+
+// Listen for "SKIP_WAITING" message from the page
+self.addEventListener("message", (event) => {
+  if (event.data === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
