@@ -13,11 +13,51 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <script>
       (function () {
+        // Theme
         var t = localStorage.getItem("ai-chat-theme") || "dark";
         document.documentElement.className = "theme-" + t;
         document.addEventListener("DOMContentLoaded", function () {
           document.body.className = "theme-" + t;
         });
+
+        // Fix Android PWA viewport height bug.
+        // 100dvh / 100vh shifts when the nav bar or keyboard changes.
+        // We measure window.innerHeight and write it as --app-height.
+        function setAppHeight() {
+          var h = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+          document.documentElement.style.setProperty("--app-height", h + "px");
+        }
+        setAppHeight();
+
+        // Re-measure on every resize and orientation change
+        window.addEventListener("resize", setAppHeight);
+        window.addEventListener("orientationchange", function () {
+          // Small delay so the browser finishes its own resize
+          setTimeout(setAppHeight, 100);
+        });
+
+        // Re-measure when user comes back (e.g. from Settings via back button)
+        document.addEventListener("visibilitychange", function () {
+          if (document.visibilityState === "visible") {
+            setAppHeight();
+            setTimeout(setAppHeight, 150); // second pass after browser settles
+          }
+        });
+        // pageshow fires on bfcache restore (Android back-navigation)
+        window.addEventListener("pageshow", function (e) {
+          setAppHeight();
+          if (e.persisted) {
+            // bfcache restore — browser may still be adjusting the viewport
+            setTimeout(setAppHeight, 50);
+            setTimeout(setAppHeight, 300);
+          }
+        });
+        window.addEventListener("focus", setAppHeight);
+
+        // visualViewport API for keyboards (Android Chrome)
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener("resize", setAppHeight);
+        }
       })();
     </script>
     <link rel="stylesheet" href="./style.css" />

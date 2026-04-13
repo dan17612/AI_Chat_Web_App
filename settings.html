@@ -13,11 +13,31 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <script>
       (function () {
+        // Theme
         var t = localStorage.getItem("ai-chat-theme") || "dark";
         document.documentElement.className = "theme-" + t;
         document.addEventListener("DOMContentLoaded", function () {
           document.body.className = "theme-" + t;
         });
+
+        // Fix Android PWA viewport height bug
+        function setAppHeight() {
+          var h = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+          document.documentElement.style.setProperty("--app-height", h + "px");
+        }
+        setAppHeight();
+        window.addEventListener("resize", setAppHeight);
+        window.addEventListener("orientationchange", function () {
+          setTimeout(setAppHeight, 100);
+        });
+        document.addEventListener("visibilitychange", function () {
+          if (document.visibilityState === "visible") setAppHeight();
+        });
+        window.addEventListener("pageshow", setAppHeight);
+        window.addEventListener("focus", setAppHeight);
+        if (window.visualViewport) {
+          window.visualViewport.addEventListener("resize", setAppHeight);
+        }
       })();
     </script>
     <link rel="stylesheet" href="./settings.css" />
