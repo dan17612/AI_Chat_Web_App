@@ -1,6 +1,6 @@
 // ============================================
 // AI Chat Pro Client – Web App API Layer
-// Direct provider fetch calls (no background service worker).
+// Supports both non-streaming and streaming responses.
 // On error throws an object: { message, errorCode, errorParams }
 // ============================================
 
@@ -28,6 +28,10 @@
     throw apiError(code, [response.status, detail],
       `${provider} error (${response.status}): ${detail}`);
   }
+
+  // ============================================
+  // Non-streaming calls (fallback)
+  // ============================================
 
   async function callPerplexity(s, apiKey, model, messages) {
     const base = (s.baseUrls?.perplexity || "https://api.perplexity.ai").replace(/\/$/, "");
@@ -66,7 +70,6 @@
       headers: {
         "x-api-key": apiKey,
         "anthropic-version": "2023-06-01",
-        // Required for direct browser calls to the Anthropic API
         "anthropic-dangerous-allow-browser": "true",
         "Content-Type": "application/json",
       },
@@ -115,12 +118,226 @@
     return { content: data.choices[0].message.content, usage: data.usage };
   }
 
+  // ============================================
+  // Streaming calls
+  // ============================================
+
   /**
-   * Main entry point.
-   * @param {Object} settings  - full settings object from Storage
-   * @param {Array}  messages  - [{role, content}, …]
-   * @returns {Promise<{content, citations?, usage?}>}
-   * @throws  Error with .errorCode + .errorParams on failure
+   * Parse SSE lines from a text chunk.
+   * Handles buffering of incomplete lines across chunks.
+   */
+  function createSSEParser() {
+    let buffer = "";
+    return function parse(chunk) {
+      buffer += chunk;
+      const events = [];
+      const lines = buffer.split("\n");
+      buffer = lines.pop(); // keep incomplete line
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed === "data: [DONE]") continue;
+        if (trimmed.startsWith("data: ")) {
+          try {
+            events.push(JSON.parse(trimmed.slice(6)));
+          } catch (e) { /* skip malformed */ }
+        }
+      }
+      return events;
+    };
+  }
+
+  /**
+   * Stream from OpenAI-compatible endpoint (OpenAI, Perplexity, LM Studio).
+   * Calls onContent(text), onReasoning(text) for each chunk.
+   * Returns { content, reasoning, citations, usage }.
+   */
+  async function streamOpenAICompatible(url, headers, body, callbacks) {
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json" },
+      body: JSON.stringify({ ...body, stream: true }),
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw apiError("api", [resp.status, err.error?.message || resp.statusText],
+        `API error (${resp.status}): ${err.error?.message || resp.statusText}`);
+    }
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    const parse = createSSEParser();
+    let content = "";
+    let reasoning = "";
+    let citations = [];
+    let usage = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const events = parse(decoder.decode(value, { stream: true }));
+      for (const data of events) {
+        const delta = data.choices?.[0]?.delta;
+        if (!delta) continue;
+
+        // Reasoning tokens (OpenAI reasoning models, some providers)
+        const reasoningChunk = delta.reasoning_content || delta.reasoning || null;
+        if (reasoningChunk) {
+          reasoning += reasoningChunk;
+          if (callbacks.onReasoning) callbacks.onReasoning(reasoningChunk);
+        }
+
+        // Content tokens
+        if (delta.content) {
+          content += delta.content;
+          if (callbacks.onContent) callbacks.onContent(delta.content);
+        }
+
+        // Citations (Perplexity)
+        if (data.citations) citations = data.citations;
+        if (data.usage) usage = data.usage;
+      }
+    }
+
+    return { content, reasoning, citations, usage };
+  }
+
+  /**
+   * Stream from Anthropic API.
+   * Anthropic uses a different SSE format with event types.
+   */
+  async function streamAnthropic(s, apiKey, model, messages, callbacks) {
+    const body = {
+      model,
+      max_tokens: s.maxTokens,
+      stream: true,
+      messages: messages.filter((m) => m.role !== "system"),
+    };
+    if (s.systemPrompt) body.system = s.systemPrompt;
+
+    // Extended thinking for Claude models that support it
+    if (model && (model.includes("claude-3-7") || model.includes("claude-4") || model.includes("opus") || model.includes("sonnet-4"))) {
+      body.thinking = { type: "enabled", budget_tokens: Math.min(s.maxTokens, 8000) };
+    }
+
+    const base = (s.baseUrls?.anthropic || "https://api.anthropic.com").replace(/\/$/, "");
+    const resp = await fetch(`${base}/v1/messages`, {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-allow-browser": "true",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!resp.ok) await handleHttpError(resp, "anthropic");
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    const parse = createSSEParser();
+    let content = "";
+    let reasoning = "";
+    let usage = null;
+    let currentBlockType = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const events = parse(decoder.decode(value, { stream: true }));
+      for (const data of events) {
+        // Anthropic event types
+        if (data.type === "content_block_start") {
+          currentBlockType = data.content_block?.type || null;
+        } else if (data.type === "content_block_delta") {
+          if (data.delta?.type === "thinking_delta") {
+            reasoning += data.delta.thinking;
+            if (callbacks.onReasoning) callbacks.onReasoning(data.delta.thinking);
+          } else if (data.delta?.type === "text_delta") {
+            content += data.delta.text;
+            if (callbacks.onContent) callbacks.onContent(data.delta.text);
+          }
+        } else if (data.type === "message_delta") {
+          if (data.usage) usage = data.usage;
+        }
+      }
+    }
+
+    return { content, reasoning, usage };
+  }
+
+  /**
+   * Main streaming entry point.
+   * @param {Object} settings
+   * @param {Array} messages
+   * @param {Object} callbacks - { onContent(chunk), onReasoning(chunk) }
+   * @returns {Promise<{content, reasoning, citations?, usage?}>}
+   */
+  async function chatStream(settings, messages, callbacks) {
+    const s = settings || {};
+    const provider = s.provider || "perplexity";
+    const apiKey = s.apiKeys?.[provider] || "";
+    const model = s.models?.[provider] || "";
+    const built = buildMessages(s, messages);
+    const cb = callbacks || {};
+
+    if (provider !== "lmstudio" && !apiKey) {
+      throw apiError("apiKeyMissing", [], "API key not configured.");
+    }
+
+    try {
+      switch (provider) {
+        case "anthropic":
+          return await streamAnthropic(s, apiKey, model, built, cb);
+
+        case "openai": {
+          const base = (s.baseUrls?.openai || "https://api.openai.com").replace(/\/$/, "");
+          return await streamOpenAICompatible(
+            `${base}/v1/chat/completions`,
+            { Authorization: `Bearer ${apiKey}` },
+            { model, messages: built, temperature: s.temperature, max_tokens: s.maxTokens },
+            cb
+          );
+        }
+
+        case "lmstudio": {
+          const base = (s.baseUrls?.lmstudio || "http://localhost:1234").replace(/\/$/, "");
+          const lmBody = { messages: built, temperature: s.temperature, max_tokens: s.maxTokens };
+          if (model) lmBody.model = model;
+          return await streamOpenAICompatible(
+            `${base}/v1/chat/completions`,
+            apiKey ? { Authorization: `Bearer ${apiKey}` } : {},
+            lmBody,
+            cb
+          );
+        }
+
+        case "perplexity":
+        default: {
+          const base = (s.baseUrls?.perplexity || "https://api.perplexity.ai").replace(/\/$/, "");
+          return await streamOpenAICompatible(
+            `${base}/chat/completions`,
+            { Authorization: `Bearer ${apiKey}` },
+            { model, messages: built, temperature: s.temperature, max_tokens: s.maxTokens },
+            cb
+          );
+        }
+
+        case "gemini":
+          // Gemini uses a different protocol, fall back to non-streaming
+          return await callGemini(s, apiKey, model, built);
+      }
+    } catch (err) {
+      if (err.errorCode) throw err;
+      throw apiError("connection", [err.message], `Connection error: ${err.message}`);
+    }
+  }
+
+  /**
+   * Non-streaming main entry point (legacy).
    */
   async function chat(settings, messages) {
     const s = settings || {};
@@ -147,5 +364,5 @@
     }
   }
 
-  window.Api = { chat };
+  window.Api = { chat, chatStream };
 })();

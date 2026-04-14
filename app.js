@@ -681,6 +681,21 @@
       ? escapeHtml(msg.content).replace(/\n/g, "<br>")
       : renderMarkdown(msg.content);
 
+    let reasoningHtml = "";
+    if (!isUser && msg.reasoning) {
+      reasoningHtml = `
+        <div class="message-reasoning">
+          <details>
+            <summary>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              <span>${_t("msg.reasoning")}</span>
+            </summary>
+            <div class="reasoning-content">${escapeHtml(msg.reasoning)}</div>
+          </details>
+        </div>
+      `;
+    }
+
     let sourcesHtml = "";
     if (
       !isUser &&
@@ -709,6 +724,7 @@
             <span class="message-author">${isUser ? _t("msg.you") : _t("msg.ai")}</span>
             <span class="message-time">${time}</span>
           </div>
+          ${reasoningHtml}
           <div class="message-body">${body}</div>
           ${sourcesHtml}
         </div>
@@ -766,11 +782,90 @@
     }));
 
     try {
-      const response = await window.Api.chat(state.settings, apiMessages);
+      const _t = window.i18n ? window.i18n.t.bind(window.i18n) : (k) => k;
 
+      // Create a placeholder message element for streaming
+      const streamId = "stream-" + Date.now();
+      const streamHtml = `
+        <div class="message assistant" id="${streamId}">
+          <div class="message-avatar">AI</div>
+          <div class="message-content">
+            <div class="message-header">
+              <span class="message-author">${_t("msg.ai")}</span>
+              <span class="message-time">${formatTime(Date.now())}</span>
+            </div>
+            <div class="message-reasoning hidden">
+              <details open>
+                <summary>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                  <span>${_t("msg.thinking")}</span>
+                  <span class="reasoning-spinner"></span>
+                </summary>
+                <div class="reasoning-content"></div>
+              </details>
+            </div>
+            <div class="message-body"></div>
+          </div>
+        </div>
+      `;
+      dom.typingIndicator.classList.add("hidden");
+      dom.messages.insertAdjacentHTML("beforeend", streamHtml);
+
+      const streamEl = document.getElementById(streamId);
+      const reasoningWrap = streamEl.querySelector(".message-reasoning");
+      const reasoningContent = streamEl.querySelector(".reasoning-content");
+      const bodyEl = streamEl.querySelector(".message-body");
+      let hasReasoning = false;
+
+      const response = await window.Api.chatStream(state.settings, apiMessages, {
+        onReasoning(chunk) {
+          if (!hasReasoning) {
+            hasReasoning = true;
+            reasoningWrap.classList.remove("hidden");
+          }
+          reasoningContent.textContent += chunk;
+        },
+        onContent(chunk) {
+          // Once content starts, collapse reasoning
+          if (hasReasoning) {
+            const details = reasoningWrap.querySelector("details");
+            if (details && details.open) {
+              details.open = false;
+              // Remove spinner
+              const spinner = details.querySelector(".reasoning-spinner");
+              if (spinner) spinner.remove();
+            }
+          }
+          bodyEl.innerHTML = renderMarkdown(bodyEl.textContent + chunk);
+        },
+      });
+
+      // Remove spinner if still present
+      const spinner = streamEl.querySelector(".reasoning-spinner");
+      if (spinner) spinner.remove();
+
+      // Final render with full markdown
+      bodyEl.innerHTML = renderMarkdown(response.content);
+
+      // Add sources if available
+      if (response.citations && response.citations.length > 0 && state.settings.showSources) {
+        const sourcesHtml = `
+          <div class="message-sources">
+            <div class="sources-title">${_t("msg.sources")}</div>
+            <div>${response.citations.map((url, i) => {
+              const domain = extractDomain(url);
+              return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener" class="source-link">${i + 1}. ${domain}</a>`;
+            }).join("")}</div>
+          </div>
+        `;
+        streamEl.querySelector(".message-content").insertAdjacentHTML("beforeend", sourcesHtml);
+      }
+
+      // Save to conversation
       const assistantMsg = {
         role: "assistant",
         content: response.content,
+        reasoning: response.reasoning || "",
         citations: response.citations || [],
         usage: response.usage,
         timestamp: Date.now(),
@@ -779,7 +874,6 @@
       conv.updatedAt = Date.now();
       saveState();
 
-      dom.messages.insertAdjacentHTML("beforeend", renderMessage(assistantMsg));
       bindCopyButtons();
     } catch (err) {
       let errMsg = err.message;
@@ -788,6 +882,11 @@
         errMsg = window.i18n.t("error." + err.errorCode, ...params);
       }
       showToast(errMsg, "error");
+      // Remove streaming placeholder if exists
+      const placeholder = dom.messages.querySelector(".message.assistant:last-child");
+      if (placeholder && placeholder.id && placeholder.id.startsWith("stream-")) {
+        placeholder.remove();
+      }
       // Remove user message on error if it was the only message
       if (conv.messages.length === 1) {
         conv.messages.pop();
