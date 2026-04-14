@@ -826,23 +826,28 @@
           reasoningContent.textContent += chunk;
         },
         onContent(chunk) {
-          // Once content starts, collapse reasoning
+          // Once content starts, collapse reasoning and rename label
           if (hasReasoning) {
             const details = reasoningWrap.querySelector("details");
             if (details && details.open) {
               details.open = false;
-              // Remove spinner
               const spinner = details.querySelector(".reasoning-spinner");
               if (spinner) spinner.remove();
+              const label = details.querySelector("summary span");
+              if (label) label.textContent = _t("msg.reasoning");
             }
           }
           bodyEl.innerHTML = renderMarkdown(bodyEl.textContent + chunk);
         },
       });
 
-      // Remove spinner if still present
-      const spinner = streamEl.querySelector(".reasoning-spinner");
-      if (spinner) spinner.remove();
+      // Finalize reasoning label & remove spinner (if no content was streamed)
+      if (hasReasoning) {
+        const spinner = streamEl.querySelector(".reasoning-spinner");
+        if (spinner) spinner.remove();
+        const label = streamEl.querySelector(".message-reasoning summary span");
+        if (label) label.textContent = _t("msg.reasoning");
+      }
 
       // Final render with full markdown
       bodyEl.innerHTML = renderMarkdown(response.content);
