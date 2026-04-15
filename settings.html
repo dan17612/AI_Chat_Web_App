@@ -249,7 +249,17 @@
 
             <div class="setting-group">
               <label class="setting-label" for="model-select" data-i18n="model.select">Model</label>
-              <select id="model-select" class="input"></select>
+              <div class="input-with-action">
+                <select id="model-select" class="input"></select>
+                <button id="btn-load-models" class="btn-icon hidden" data-i18n-title="model.lmLoad" title="Load models from LM Studio">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 4 23 10 17 10" />
+                    <polyline points="1 20 1 14 7 14" />
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                  </svg>
+                </button>
+              </div>
+              <span id="lmstudio-model-hint" class="setting-hint hidden"></span>
             </div>
 
             <div class="setting-group">
@@ -276,24 +286,8 @@
               <div id="custom-model-list" class="custom-model-list"></div>
             </div>
 
-            <div class="setting-group hidden" id="lmstudio-model-group">
-              <label class="setting-label">Modell</label>
-              <div class="input-with-action">
-                <select id="lmstudio-model" class="input">
-                  <option value="">-- Modelle laden --</option>
-                </select>
-                <button id="btn-load-models" class="btn-icon" data-i18n-title="model.lmLoad" title="Load models from LM Studio">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="23 4 23 10 17 10" />
-                    <polyline points="1 20 1 14 7 14" />
-                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-                  </svg>
-                </button>
-              </div>
-              <span id="lmstudio-model-hint" class="setting-hint" data-i18n="model.lmHint">Start LM Studio and click the refresh icon.</span>
-            </div>
 
-            <div class="setting-group">
+<div class="setting-group">
               <label class="setting-label" for="temperature">
                 <span data-i18n="model.temp">Temperature</span>
                 <span class="setting-value" id="temperature-value">0.7</span>
@@ -480,18 +474,6 @@
               <input type="file" id="import-file-input" accept=".json,application/json" style="display:none" />
             </div>
 
-            <div class="setting-group danger-zone">
-              <label class="setting-label" data-i18n="data.danger">Danger zone</label>
-              <button id="btn-clear-all" class="btn btn-danger">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="3 6 5 6 21 6" />
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                </svg>
-                <span data-i18n="data.clearAll">Delete all chats</span>
-              </button>
-              <span class="setting-hint" data-i18n="data.clearHint">This action cannot be undone.</span>
-            </div>
-
             <div class="setting-group">
               <label class="setting-label" data-i18n="data.clearCache">Cache &amp; App update</label>
               <button id="btn-clear-cache" class="btn btn-secondary">
@@ -506,8 +488,21 @@
             </div>
 
             <div class="setting-group danger-zone">
-              <button id="btn-reset-settings" class="btn btn-danger-outline" data-i18n="data.reset">Reset settings</button>
-              <span class="setting-hint" data-i18n="data.resetHint">Resets all settings to their default values.</span>
+              <label class="setting-label" data-i18n="data.danger">Danger zone</label>
+              <button id="btn-clear-all" class="btn btn-danger">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+                <span data-i18n="data.clearAll">Delete all chats</span>
+              </button>
+              <button id="btn-reset-settings" class="btn btn-danger-outline" style="margin-top: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
+                </svg>
+                <span data-i18n="data.reset">Reset settings</span>
+              </button>
+              <span class="setting-hint" data-i18n="data.clearHint">This action cannot be undone.</span>
             </div>
           </section>
         </div>

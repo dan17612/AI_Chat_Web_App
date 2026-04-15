@@ -135,8 +135,6 @@
     btnTestApi: $("#btn-test-api"),
     apiTestResult: $("#api-test-result"),
     modelSelect: $("#model-select"),
-    lmStudioModelGroup: $("#lmstudio-model-group"),
-    lmStudioModel: $("#lmstudio-model"),
     lmStudioModelHint: $("#lmstudio-model-hint"),
     btnLoadModels: $("#btn-load-models"),
     btnCheckModels: $("#btn-check-models"),
@@ -303,13 +301,13 @@
       }
 
       const current = settings.models?.lmstudio || "";
-      dom.lmStudioModel.innerHTML = models
+      dom.modelSelect.innerHTML = models
         .map((id) => `<option value="${id}" ${id === current ? "selected" : ""}>${id}</option>`)
         .join("");
 
       if (!current || !models.includes(current)) {
         settings.models.lmstudio = models[0];
-        dom.lmStudioModel.value = models[0];
+        dom.modelSelect.value = models[0];
         saveSettings();
       }
 
@@ -365,16 +363,20 @@
     }
 
     if (isLmStudio) {
-      dom.modelSelect.classList.add("hidden");
-      dom.lmStudioModelGroup.classList.remove("hidden");
+      dom.modelSelect.classList.remove("hidden");
+      dom.btnLoadModels.classList.remove("hidden");
+      dom.lmStudioModelHint.classList.remove("hidden");
       const saved = settings.models?.lmstudio || "";
       if (saved) {
-        dom.lmStudioModel.innerHTML = `<option value="${saved}" selected>${saved}</option>`;
+        dom.modelSelect.innerHTML = `<option value="${saved}" selected>${saved}</option>`;
+      } else {
+        dom.modelSelect.innerHTML = "";
       }
       loadLmStudioModels();
     } else {
-      dom.modelSelect.classList.remove("hidden");
-      dom.lmStudioModelGroup.classList.add("hidden");
+      dom.btnLoadModels.classList.add("hidden");
+      dom.lmStudioModelHint.classList.add("hidden");
+      dom.lmStudioModelHint.textContent = "";
       rebuildModelSelect(provider);
       renderModelCheckResults(provider);
     }
@@ -527,11 +529,6 @@
 
     dom.modelSelect.addEventListener("change", () => {
       settings.models[settings.provider] = dom.modelSelect.value;
-      saveSettings();
-    });
-
-    dom.lmStudioModel.addEventListener("change", () => {
-      settings.models.lmstudio = dom.lmStudioModel.value;
       saveSettings();
     });
 
