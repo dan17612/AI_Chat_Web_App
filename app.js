@@ -238,7 +238,11 @@
       "settings",
     ]);
     state.conversations = data.conversations || [];
-    state.activeConversationId = data.activeConversationId || null;
+    // Always start with welcome screen on app open (user preference)
+    state.activeConversationId = null;
+    if (data.activeConversationId) {
+      try { window.Storage.set({ activeConversationId: null }); } catch (e) {}
+    }
     state.settings = normalizeSettings(data.settings);
   }
 

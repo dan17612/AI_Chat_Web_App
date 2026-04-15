@@ -198,6 +198,10 @@
       "data.resetHint": "Resets all settings to their default values.",
       "data.resetConfirm": "Really reset settings?",
       "data.resetDone": "Settings have been reset.",
+      "data.clearCache": "Cache & App update",
+      "data.clearCacheBtn": "Clear cache & update app",
+      "data.clearCacheHint": "Clears the app cache and reloads the latest version under the same link.",
+      "data.clearCacheConfirm": "Clear cache and reload the app?",
       "data.noChatToExport": "No chats to export.",
 
       // Popup – conversation list & messages
@@ -433,6 +437,10 @@
       "data.resetHint": "Setzt alle Einstellungen auf die Standardwerte zurück.",
       "data.resetConfirm": "Einstellungen wirklich zurücksetzen?",
       "data.resetDone": "Einstellungen wurden zurückgesetzt.",
+      "data.clearCache": "Cache & App-Update",
+      "data.clearCacheBtn": "Cache leeren & App aktualisieren",
+      "data.clearCacheHint": "Löscht den Cache und lädt die neueste Version unter demselben Link neu.",
+      "data.clearCacheConfirm": "Cache leeren und App neu laden?",
       "data.noChatToExport": "Keine Chats zum Exportieren.",
 
       // Popup – conversation list & messages
@@ -666,6 +674,10 @@
       "data.resetHint": "Сбрасывает все настройки до значений по умолчанию.",
       "data.resetConfirm": "Действительно сбросить настройки?",
       "data.resetDone": "Настройки сброшены.",
+      "data.clearCache": "Кэш и обновление приложения",
+      "data.clearCacheBtn": "Очистить кэш и обновить приложение",
+      "data.clearCacheHint": "Очищает кэш и загружает последнюю версию по той же ссылке.",
+      "data.clearCacheConfirm": "Очистить кэш и перезагрузить приложение?",
       "data.noChatToExport": "Нет чатов для экспорта.",
 
       // Popup – conversation list & messages

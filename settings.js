@@ -162,6 +162,7 @@
     importFileInput: $("#import-file-input"),
     btnClearAll: $("#btn-clear-all"),
     btnResetSettings: $("#btn-reset-settings"),
+    btnClearCache: $("#btn-clear-cache"),
     messageList: $("#message-list"),
     btnClearMessages: $("#btn-clear-messages"),
   };
@@ -601,6 +602,7 @@
 
     dom.btnClearAll.addEventListener("click", clearAllChats);
     dom.btnResetSettings.addEventListener("click", resetSettings);
+    if (dom.btnClearCache) dom.btnClearCache.addEventListener("click", clearCacheAndUpdate);
 
     window
       .matchMedia("(prefers-color-scheme: dark)")
@@ -864,6 +866,22 @@
     await window.Storage.set({ conversations: [], activeConversationId: null });
     loadStats();
     alert(t("data.clearDone"));
+  }
+
+  async function clearCacheAndUpdate() {
+    if (!confirm(t("data.clearCacheConfirm"))) return;
+    try {
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+      if ("serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister()));
+      }
+    } catch (e) { /* ignore */ }
+    const url = "./index.html?v=" + Date.now();
+    window.location.replace(url);
   }
 
   async function resetSettings() {
