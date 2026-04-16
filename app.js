@@ -808,7 +808,11 @@
                 <div class="reasoning-content"></div>
               </details>
             </div>
-            <div class="message-body"></div>
+            <div class="message-body">
+              <div class="inline-typing" aria-label="typing">
+                <span></span><span></span><span></span>
+              </div>
+            </div>
           </div>
         </div>
       `;
@@ -820,6 +824,38 @@
       const reasoningContent = streamEl.querySelector(".reasoning-content");
       const bodyEl = streamEl.querySelector(".message-body");
       let hasReasoning = false;
+      let streamedContent = "";
+      let firstContent = true;
+
+      // Smooth-out providers that send reasoning in few large chunks
+      // (e.g. Gemini thought summaries). Queues characters and flushes them
+      // on a timer so it animates like a real stream.
+      const reasoningQueue = { text: "", timer: null };
+      function flushReasoning() {
+        if (!reasoningQueue.text) {
+          reasoningQueue.timer = null;
+          return;
+        }
+        const step = Math.max(1, Math.ceil(reasoningQueue.text.length / 20));
+        const piece = reasoningQueue.text.slice(0, step);
+        reasoningQueue.text = reasoningQueue.text.slice(step);
+        reasoningContent.textContent += piece;
+        reasoningQueue.timer = setTimeout(flushReasoning, 16);
+      }
+      function enqueueReasoning(chunk) {
+        reasoningQueue.text += chunk;
+        if (!reasoningQueue.timer) flushReasoning();
+      }
+      function drainReasoningNow() {
+        if (reasoningQueue.timer) {
+          clearTimeout(reasoningQueue.timer);
+          reasoningQueue.timer = null;
+        }
+        if (reasoningQueue.text) {
+          reasoningContent.textContent += reasoningQueue.text;
+          reasoningQueue.text = "";
+        }
+      }
 
       const response = await window.Api.chatStream(state.settings, apiMessages, {
         onReasoning(chunk) {
@@ -827,11 +863,19 @@
             hasReasoning = true;
             reasoningWrap.classList.remove("hidden");
           }
-          reasoningContent.textContent += chunk;
+          // If the chunk is small (real token stream like LM Studio), show it as-is.
+          // If it's a big blob (Gemini summary), animate it smoothly.
+          if (chunk.length > 20) {
+            enqueueReasoning(chunk);
+          } else {
+            drainReasoningNow();
+            reasoningContent.textContent += chunk;
+          }
         },
         onContent(chunk) {
-          // Once content starts, collapse reasoning and rename label
+          // Once content starts, flush pending reasoning and collapse it
           if (hasReasoning) {
+            drainReasoningNow();
             const details = reasoningWrap.querySelector("details");
             if (details && details.open) {
               details.open = false;
@@ -841,9 +885,18 @@
               if (label) label.textContent = _t("msg.reasoning");
             }
           }
-          bodyEl.innerHTML = renderMarkdown(bodyEl.textContent + chunk);
+          if (firstContent) {
+            // Remove typing dots on first real content chunk
+            bodyEl.innerHTML = "";
+            firstContent = false;
+          }
+          streamedContent += chunk;
+          bodyEl.innerHTML = renderMarkdown(streamedContent);
         },
       });
+
+      // Stream finished: make sure any queued reasoning text is visible
+      drainReasoningNow();
 
       // Finalize reasoning label & remove spinner (if no content was streamed)
       if (hasReasoning) {

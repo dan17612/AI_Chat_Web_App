@@ -85,10 +85,19 @@
       role: m.role === "assistant" ? "model" : "user",
       parts: [{ text: m.content }],
     }));
-    const body = {
-      contents,
-      generationConfig: { temperature: s.temperature, maxOutputTokens: s.maxTokens },
+    const generationConfig = {
+      temperature: s.temperature,
+      maxOutputTokens: s.maxTokens,
     };
+    if (geminiSupportsThinking(model)) {
+      // -1 = dynamic thinking: the model decides how much to think.
+      // This also tends to produce longer, more incremental thought summaries.
+      generationConfig.thinkingConfig = {
+        includeThoughts: true,
+        thinkingBudget: -1,
+      };
+    }
+    const body = { contents, generationConfig };
     if (s.systemPrompt) body.systemInstruction = { parts: [{ text: s.systemPrompt }] };
     const base = (s.baseUrls?.gemini || "https://generativelanguage.googleapis.com").replace(/\/$/, "");
     const resp = await fetch(`${base}/v1beta/models/${model}:generateContent?key=${apiKey}`, {
@@ -98,7 +107,15 @@
     });
     if (!resp.ok) await handleHttpError(resp, "gemini");
     const data = await resp.json();
-    return { content: data.candidates[0].content.parts[0].text };
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    let content = "";
+    let reasoning = "";
+    for (const p of parts) {
+      if (!p.text) continue;
+      if (p.thought === true) reasoning += p.text;
+      else content += p.text;
+    }
+    return { content, reasoning };
   }
 
   async function callLMStudio(s, apiKey, model, messages) {
@@ -270,6 +287,94 @@
   }
 
   /**
+   * Detect whether a Gemini model supports the "thinking" feature.
+   * Supported by 2.5+, 3.x and explicit "thinking" / "flash-lite-preview" models.
+   */
+  function geminiSupportsThinking(model) {
+    if (!model) return false;
+    const m = model.toLowerCase();
+    return (
+      m.includes("2.5") ||
+      m.includes("3.0") ||
+      m.includes("3.1") ||
+      m.includes("3-") ||
+      m.includes("thinking") ||
+      m.includes("flash-lite")
+    );
+  }
+
+  /**
+   * Stream from Google Gemini API.
+   * Uses :streamGenerateContent?alt=sse which returns OpenAI-like SSE chunks.
+   * For thinking-capable models, asks for thought summaries via
+   * generationConfig.thinkingConfig.includeThoughts and routes parts with
+   * thought:true to onReasoning.
+   */
+  async function streamGemini(s, apiKey, model, messages, callbacks) {
+    const contents = messages.map((m) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
+    }));
+    const generationConfig = {
+      temperature: s.temperature,
+      maxOutputTokens: s.maxTokens,
+    };
+    if (geminiSupportsThinking(model)) {
+      // -1 = dynamic thinking: the model decides how much to think.
+      // This also tends to produce longer, more incremental thought summaries.
+      generationConfig.thinkingConfig = {
+        includeThoughts: true,
+        thinkingBudget: -1,
+      };
+    }
+    const body = { contents, generationConfig };
+    if (s.systemPrompt) body.systemInstruction = { parts: [{ text: s.systemPrompt }] };
+    const base = (s.baseUrls?.gemini || "https://generativelanguage.googleapis.com").replace(/\/$/, "");
+    const resp = await fetch(
+      `${base}/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      }
+    );
+
+    if (!resp.ok) await handleHttpError(resp, "gemini");
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    const parse = createSSEParser();
+    let content = "";
+    let reasoning = "";
+    let usage = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const events = parse(decoder.decode(value, { stream: true }));
+      for (const data of events) {
+        const parts = data.candidates?.[0]?.content?.parts;
+        if (parts && Array.isArray(parts)) {
+          for (const p of parts) {
+            if (!p.text) continue;
+            if (p.thought === true) {
+              reasoning += p.text;
+              if (callbacks.onReasoning) callbacks.onReasoning(p.text);
+            } else {
+              content += p.text;
+              if (callbacks.onContent) callbacks.onContent(p.text);
+            }
+          }
+        }
+        if (data.usageMetadata) usage = data.usageMetadata;
+      }
+    }
+
+    return { content, reasoning, usage };
+  }
+
+  /**
    * Main streaming entry point.
    * @param {Object} settings
    * @param {Array} messages
@@ -327,8 +432,13 @@
         }
 
         case "gemini":
-          // Gemini uses a different protocol, fall back to non-streaming
-          return await callGemini(s, apiKey, model, built);
+          try {
+            return await streamGemini(s, apiKey, model, built, cb);
+          } catch (e) {
+            // Fallback to non-streaming if the streaming endpoint fails
+            if (e.errorCode) throw e;
+            return await callGemini(s, apiKey, model, built);
+          }
       }
     } catch (err) {
       if (err.errorCode) throw err;
